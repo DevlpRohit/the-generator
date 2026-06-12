@@ -1,4 +1,8 @@
 @echo off
+setlocal
+
+:: ── Always run from THIS batch file's own folder ──────────────
+cd /d "%~dp0"
 set PYTHONIOENCODING=utf-8
 set PYTHONPATH=%~dp0
 
@@ -8,9 +12,11 @@ if exist "%~dp0venv\Scripts\activate.bat" (
 )
 
 echo.
-echo  Master AI Video Maker
-echo  Open: http://127.0.0.1:5000
+echo  The Generator — AI Video Maker
+echo  Folder : %~dp0
+echo  Open   : http://127.0.0.1:5000
 echo.
 
+:: Start server
 python "%~dp0app.py"
 pause
