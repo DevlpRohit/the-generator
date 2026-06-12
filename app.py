@@ -929,14 +929,12 @@ def serve_video(folder: str, filename: str):
 
 @app.route("/open_folder/<folder_name>")
 def open_folder(folder_name: str):
-    # os.startfile is Windows-only; on Linux (HF Spaces) just return ok
-    if sys.platform == "win32":
-        folder = PROJECTS_DIR / folder_name
-        if folder.exists():
-            try:
-                os.startfile(str(folder))
-            except Exception:
-                pass
+    folder = PROJECTS_DIR / folder_name
+    if folder.exists():
+        try:
+            os.startfile(str(folder))
+        except Exception:
+            pass
     return jsonify({"ok": True})
 
 
@@ -1067,8 +1065,6 @@ def upload_youtube(folder_name: str):
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 7860))
-    host = "0.0.0.0"
-    print(f"\n  Master AI Video Maker")
-    print(f"  Open: http://{host}:{port}\n")
-    app.run(host=host, port=port, debug=False, threaded=True)
+    print("\n  The Generator — Local Video Maker")
+    print("  Open: http://127.0.0.1:5000\n")
+    app.run(host="127.0.0.1", port=5000, debug=False, threaded=True)

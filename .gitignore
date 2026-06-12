@@ -8,3 +8,9 @@ gsheets_credentials.json
 client_secrets.json
 *credentials*.json
 voice_profiles/
+*.log
+~$*
+*.db
+jobs.db
+plan.md
+prompt.md

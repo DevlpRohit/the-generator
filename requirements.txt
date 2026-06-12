@@ -13,4 +13,3 @@ beautifulsoup4>=4.12
 requests>=2.31
 imageio-ffmpeg>=0.4
 pyttsx3>=2.90
-supabase>=2.0
