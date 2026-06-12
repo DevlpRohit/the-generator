@@ -135,11 +135,11 @@
               </div>
               <div class="field">
                 <label>Subtitle Style</label>
-                <select name="subtitle_preset">{% for sp_val, sp_label in subtitle_preset_options %}<option value="{{ sp_val }}"{% if sp_val == "Bold Yellow" %} selected{% endif %}>{{ sp_label }}</option>{% endfor %}</select>
+                <select name="subtitle_preset">{% for sp_val, sp_label in subtitle_preset_options %}<option value="{{ sp_val }}"{% if sp_val == "Auto (AI Picks)" %} selected{% endif %}>{{ sp_label }}</option>{% endfor %}</select>
               </div>
               <div class="field">
                 <label>Background Music</label>
-                <select name="music_mood">{% for m in music_moods %}<option value="{{ m }}">{{ m }}</option>{% endfor %}</select>
+                <select name="music_mood">{% for m in music_moods %}<option value="{{ m }}"{% if m == "Auto (AI Picks)" %} selected{% endif %}>{{ m }}</option>{% endfor %}</select>
               </div>
               <div class="field span-2">
                 <label>Image Source <small>(visuals provider)</small></label>
