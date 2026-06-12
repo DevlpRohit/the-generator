@@ -48,7 +48,7 @@
 
             <div class="field">
               <label>Niche / Category
-                <small>(pick a niche, then search trending topics)</small>
+                <small>(pick a niche, then a sub-niche to narrow your topic)</small>
               </label>
               <div class="inline-row">
                 <select name="niche" id="niche-select">
@@ -58,6 +58,13 @@
                 <button type="button" class="btn-secondary" id="niche-search-btn">&#128269; Trending</button>
               </div>
               <div id="niche-warning" class="niche-warning" style="display:none"></div>
+            </div>
+
+            <div class="field" id="sub-niche-field" style="display:none">
+              <label>Sub-Niche <small>(narrows the topic focus)</small></label>
+              <select name="sub_niche" id="sub-niche-select">
+                <option value="">— All sub-niches —</option>
+              </select>
             </div>
 
             <div class="field">
@@ -268,6 +275,10 @@
   </div><!-- /main -->
 </div><!-- /app -->
 
+<script>
+/* Sub-niche data injected from server */
+const SUB_NICHES = {{ sub_niches | tojson }};
+</script>
 <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>

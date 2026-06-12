@@ -3,103 +3,210 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Trend Explorer — Master AI Video Maker</title>
+<title>Trend Explorer — AI Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>
+  .research-wrap { max-width: 820px; margin: 0 auto; padding: 32px 20px; }
+  .research-header { margin-bottom: 28px; }
+  .research-header h1 { font-size: 1.7rem; font-weight: 800; margin: 0 0 4px; }
+  .research-header p  { color: var(--muted); margin: 0; }
+  .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width:560px){ .filter-grid { grid-template-columns:1fr; } }
+  .or-divider { text-align:center; color:var(--muted); font-size:.85rem; margin:6px 0; }
+  .trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+  @media(max-width:600px){ .trend-grid { grid-template-columns:1fr; } }
+  .trend-col h3 { font-size:.95rem; font-weight:700; margin:0 0 10px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+  .trend-item { padding: 10px 14px; border-radius: 8px; cursor: pointer; background: var(--surface); border: 1px solid transparent; margin-bottom: 6px; font-size: .92rem; transition: border-color .15s, background .15s; }
+  .trend-item:hover  { border-color: var(--accent); }
+  .trend-item.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); font-weight:600; }
+  .use-btn { width:100%; margin-top:20px; }
+  .badge-sub { display:inline-block; background:var(--accent); color:#fff; border-radius:4px; font-size:.7rem; font-weight:700; padding:1px 6px; margin-left:6px; vertical-align:middle; }
+  .empty-msg { color:var(--muted); font-size:.9rem; padding:10px 0; }
+  #sub-niche-row { display:none; }
+</style>
 </head>
 <body>
-<header>
-  <div class="logo">&#9654; Master AI Video Maker</div>
-  <nav>
-    <a href="/">&#10010; New Video</a>
-    <a href="/projects">&#128190; Projects</a>
-  </nav>
-</header>
-<main class="container" style="max-width:700px">
-  <h2>&#128200; Trend Explorer</h2>
-  <p class="subtitle">Find what's trending to choose your next viral topic</p>
+<div class="app">
 
-  <div class="card">
-    <div class="field">
-      <label>Enter a keyword or niche</label>
-      <input type="text" id="kw-input" placeholder="e.g. psychology, space, finance" autocomplete="off">
+  <!-- Sidebar (mirrors main page) -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">&#9654;</span>
+      <span class="brand-name">AI&nbsp;Studio</span>
     </div>
-    <button class="btn-primary" id="fetch-btn" style="width:100%;margin-top:8px">
-      &#128200; Fetch Trends
-    </button>
-    <div id="research-error" class="error-box" style="display:none;margin-top:8px"></div>
-  </div>
-
-  <div class="card" id="results-card" style="display:none">
-    <h3>&#128200; Trending Topics</h3>
-    <ul id="topic-list" class="trend-list"></ul>
-
-    <h3 style="margin-top:20px">&#9889; Title Suggestions</h3>
-    <ul id="title-list" class="trend-list"></ul>
-
-    <div style="margin-top:16px">
-      <button class="btn-primary" id="use-topic-btn" style="width:100%">
-        Use Selected Topic &rarr; Create Video
-      </button>
+    <nav class="side-nav">
+      <a href="/" class="nav-item"><span>&#10133;</span> Create</a>
+      <a href="/projects" class="nav-item"><span>&#128250;</span> Projects</a>
+      <a href="/research" class="nav-item active"><span>&#128200;</span> Trends</a>
+      <a href="/settings" class="nav-item"><span>&#9881;</span> Settings</a>
+    </nav>
+    <div class="side-foot">
+      <div class="badge-free">100% free · local · offline</div>
     </div>
-  </div>
+  </aside>
 
-</main>
+  <div class="main">
+    <div class="research-wrap">
+
+      <div class="research-header">
+        <h1>&#128200; Trend Research Center</h1>
+        <p>Find what's hot — pick a niche, narrow by sub-niche, or search any keyword.</p>
+      </div>
+
+      <!-- Filter card -->
+      <div class="form-card" style="margin-bottom:20px">
+        <div class="panel" style="padding-bottom:0">
+          <div class="panel-title"><span class="step-dot">1</span> Pick a Niche</div>
+
+          <div class="filter-grid">
+            <div class="field">
+              <label>Niche / Category</label>
+              <select id="r-niche">
+                <option value="">— None —</option>
+                {% for n in niches %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="field" id="sub-niche-row">
+              <label>Sub-Niche <span class="badge-sub">AI narrow</span></label>
+              <select id="r-sub-niche">
+                <option value="">— All —</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="or-divider">— or —</div>
+
+          <div class="field">
+            <label>Custom Keyword <small>(overrides niche selection)</small></label>
+            <input type="text" id="r-keyword" placeholder="e.g. quantum computing, dark matter, stoicism" autocomplete="off">
+          </div>
+
+          <button class="btn-primary" id="r-fetch-btn" style="width:100%;margin:12px 0 0">
+            &#128200; Fetch Trends
+          </button>
+          <div id="r-error" class="error-box" style="display:none;margin-top:8px"></div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="r-results" style="display:none">
+        <div class="trend-grid">
+          <div class="trend-col">
+            <h3>&#128293; Trending Topics</h3>
+            <div id="r-topics"></div>
+          </div>
+          <div class="trend-col">
+            <h3>&#9889; Title Suggestions</h3>
+            <div id="r-titles"></div>
+          </div>
+        </div>
+        <button class="btn-primary use-btn" id="r-use-btn">
+          Use Selected Topic &rarr; Create Video
+        </button>
+      </div>
+
+    </div><!-- /research-wrap -->
+  </div><!-- /main -->
+</div><!-- /app -->
 
 <script>
+const SUB_NICHES = {{ sub_niches | tojson }};
 let selectedTopic = "";
 
-document.getElementById("fetch-btn").addEventListener("click", async () => {
-  const kw = document.getElementById("kw-input").value.trim();
-  if (!kw) return;
-  document.getElementById("fetch-btn").textContent = "Fetching...";
-  document.getElementById("research-error").style.display = "none";
+/* ── Sub-niche cascade ── */
+const rNiche    = document.getElementById("r-niche");
+const rSubRow   = document.getElementById("sub-niche-row");
+const rSubNiche = document.getElementById("r-sub-niche");
 
-  try {
-    const r = await fetch("/research/fetch", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({keyword: kw})
-    });
-    const d = await r.json();
-    if (d.error) throw new Error(d.error);
-
-    const topicList = document.getElementById("topic-list");
-    topicList.innerHTML = (d.trending_topics || []).map(t =>
-      `<li class="trend-item" onclick="selectTopic(this,'${escAttr(t)}')">${escHtml(t)}</li>`
-    ).join("") || "<li style='color:var(--muted)'>No results — showing fallback topics</li>";
-
-    const titleList = document.getElementById("title-list");
-    titleList.innerHTML = (d.title_suggestions || []).map(t =>
-      `<li class="trend-item" onclick="selectTopic(this,'${escAttr(t)}')">${escHtml(t)}</li>`
-    ).join("");
-
-    document.getElementById("results-card").style.display = "block";
-  } catch(e) {
-    document.getElementById("research-error").textContent = "Error: " + e.message;
-    document.getElementById("research-error").style.display = "block";
-  } finally {
-    document.getElementById("fetch-btn").textContent = "&#128200; Fetch Trends";
-  }
+rNiche.addEventListener("change", () => {
+  const subs = SUB_NICHES[rNiche.value] || [];
+  rSubNiche.innerHTML = '<option value="">— All —</option>';
+  subs.forEach(s => {
+    const o = document.createElement("option");
+    o.value = s; o.textContent = s;
+    rSubNiche.appendChild(o);
+  });
+  rSubRow.style.display = (rNiche.value && subs.length) ? "grid" : "none";
 });
 
-function selectTopic(el, topic) {
-  document.querySelectorAll(".trend-item.selected").forEach(i => i.classList.remove("selected"));
-  el.classList.add("selected");
+/* ── Fetch trends ── */
+document.getElementById("r-fetch-btn").addEventListener("click", fetchTrends);
+document.getElementById("r-keyword").addEventListener("keydown", e => {
+  if (e.key === "Enter") fetchTrends();
+});
+
+async function fetchTrends() {
+  const keyword  = document.getElementById("r-keyword").value.trim();
+  const niche    = rNiche.value.trim();
+  const subNiche = rSubNiche.value.trim();
+  const query    = keyword || subNiche || niche;
+
+  if (!query) { showErr("Enter a keyword or pick a niche first."); return; }
+
+  const btn = document.getElementById("r-fetch-btn");
+  btn.textContent = "Fetching…"; btn.disabled = true;
+  hideErr();
+
+  try {
+    const res = await fetch("/research/fetch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ keyword: query, niche, sub_niche: subNiche })
+    });
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+    renderResults(d);
+  } catch(e) {
+    showErr("Error: " + e.message);
+  } finally {
+    btn.textContent = "&#128200; Fetch Trends"; btn.disabled = false;
+  }
+}
+
+function renderResults(d) {
+  selectedTopic = "";
+
+  const topicsEl = document.getElementById("r-topics");
+  const titlesEl = document.getElementById("r-titles");
+
+  const topics = d.trending_topics || [];
+  topicsEl.innerHTML = topics.length
+    ? topics.map(t => `<div class="trend-item" onclick="pick(this,'${esc(t)}')">${escH(t)}</div>`).join("")
+    : `<p class="empty-msg">No trending topics found — try a different keyword.</p>`;
+
+  const titles = d.title_suggestions || [];
+  titlesEl.innerHTML = titles.length
+    ? titles.map(t => `<div class="trend-item" onclick="pick(this,'${esc(t)}')">${escH(t)}</div>`).join("")
+    : `<p class="empty-msg">No title suggestions.</p>`;
+
+  document.getElementById("r-results").style.display = "block";
+}
+
+function pick(el, topic) {
+  document.querySelectorAll(".trend-item.active").forEach(i => i.classList.remove("active"));
+  el.classList.add("active");
   selectedTopic = topic;
 }
 
-document.getElementById("use-topic-btn").addEventListener("click", () => {
-  if (!selectedTopic) return alert("Select a topic first");
+document.getElementById("r-use-btn").addEventListener("click", () => {
+  if (!selectedTopic) { alert("Select a topic first."); return; }
   location.href = "/?topic=" + encodeURIComponent(selectedTopic);
 });
 
-function escHtml(s) {
+function showErr(msg) {
+  const el = document.getElementById("r-error");
+  el.textContent = msg; el.style.display = "block";
+}
+function hideErr() { document.getElementById("r-error").style.display = "none"; }
+
+function escH(s) {
   return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
-function escAttr(s) {
+function esc(s) {
   return String(s).replace(/'/g,"&#39;").replace(/"/g,"&quot;");
 }
 </script>
-<script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>

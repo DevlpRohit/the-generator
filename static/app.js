@@ -70,21 +70,46 @@ if (researchBtn) {
   });
 }
 
-/* ── Niche-based search (uses Niche dropdown) ── */
+/* ── Sub-niche cascade ────────────────────────── */
+(function () {
+  const nicheEl    = document.getElementById("niche-select");
+  const subField   = document.getElementById("sub-niche-field");
+  const subEl      = document.getElementById("sub-niche-select");
+  if (!nicheEl || !subField || !subEl) return;
+
+  function populateSubNiches(niche) {
+    subEl.innerHTML = '<option value="">— All sub-niches —</option>';
+    const subs = (typeof SUB_NICHES !== "undefined" && SUB_NICHES[niche]) || [];
+    subs.forEach(s => {
+      const o = document.createElement("option");
+      o.value = s; o.textContent = s;
+      subEl.appendChild(o);
+    });
+    subField.style.display = (niche && subs.length) ? "block" : "none";
+  }
+
+  nicheEl.addEventListener("change", () => populateSubNiches(nicheEl.value));
+  // Restore on page load if niche is pre-selected
+  if (nicheEl.value) populateSubNiches(nicheEl.value);
+})();
+
+/* ── Niche-based search (uses Niche + Sub-niche dropdowns) ── */
 const nicheSearchBtn = document.getElementById("niche-search-btn");
 if (nicheSearchBtn) {
   nicheSearchBtn.addEventListener("click", async () => {
-    const niche = (document.getElementById("niche-select")?.value || "").trim();
-    if (!niche) { alert("Select a niche first"); return; }
+    const niche    = (document.getElementById("niche-select")?.value || "").trim();
+    const subNiche = (document.getElementById("sub-niche-select")?.value || "").trim();
+    const query    = subNiche || niche;
+    if (!query) { alert("Select a niche first"); return; }
 
     nicheSearchBtn.textContent = "Searching…";
     nicheSearchBtn.disabled = true;
     try {
-      await fetchTrends({ keyword: niche, niche });
+      await fetchTrends({ keyword: query, niche, sub_niche: subNiche });
     } catch (e) {
       showError("Niche search error: " + e.message);
     } finally {
-      nicheSearchBtn.textContent = "\u{1F50D} Find Trending in Niche";
+      nicheSearchBtn.textContent = "\u{1F50D} Trending";
       nicheSearchBtn.disabled = false;
     }
   });

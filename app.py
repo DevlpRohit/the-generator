@@ -36,6 +36,7 @@ from config import (
     RESOLUTIONS, SECRET_KEY,
     VOICE_SPEEDS, SUBTITLE_STYLES,
     CLONED_VOICE_LABEL, VOICE_PROFILE_PATH,
+    SUB_NICHES,
 )
 
 app = Flask(__name__)
@@ -599,6 +600,7 @@ def index():
         qualities=["360p", "480p", "720p", "1080p", "4K"],
         niches=NICHES,
         risky_niches=RISKY_NICHES,
+        sub_niches=SUB_NICHES,
         pexels_configured=bool(os.environ.get("PEXELS_API_KEY", "").strip()),
         gemini_configured=bool(os.environ.get("GEMINI_API_KEY", "").strip()),
     )
@@ -929,20 +931,22 @@ def project_detail(folder_name: str):
 
 @app.route("/research")
 def research_page():
-    return render_template("research.html")
+    return render_template("research.html", niches=NICHES, sub_niches=SUB_NICHES)
 
 
 @app.route("/research/fetch", methods=["POST"])
 def research_fetch():
-    body = request.json or {}
-    keyword = (body.get("keyword") or "").strip()
-    niche   = (body.get("niche") or "").strip()
-    query   = keyword or niche
+    body      = request.json or {}
+    keyword   = (body.get("keyword") or "").strip()
+    niche     = (body.get("niche") or "").strip()
+    sub_niche = (body.get("sub_niche") or "").strip()
+    # Priority: explicit keyword > sub-niche > niche
+    query = keyword or sub_niche or niche
     if not query:
         return jsonify({"error": "keyword or niche required"}), 400
     try:
         from modules.trend_researcher import research_topic
-        return jsonify(research_topic(query, niche=niche))
+        return jsonify(research_topic(query, niche=sub_niche or niche))
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
