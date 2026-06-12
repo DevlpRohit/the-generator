@@ -9,6 +9,14 @@ from config import VOICES
 
 # ── Narration helpers ─────────────────────────────────────────
 
+def _make_silence(duration: float = 0.22, fps: int = 44100):
+    """Return a short stereo silence AudioArrayClip to pad between paragraphs."""
+    from moviepy.audio.AudioClip import AudioArrayClip
+    n = max(1, int(fps * duration))
+    arr = np.zeros((n, 2), dtype=np.float32)
+    return AudioArrayClip(arr, fps=fps)
+
+
 async def _tts_edge(text: str, voice: str, output_path: str, rate: str = "+0%") -> None:
     import edge_tts
     communicate = edge_tts.Communicate(text, voice, rate=rate)
@@ -67,20 +75,26 @@ def _synthesize_to_mp3(text: str, voice_id: str, output_path: str, rate: str = "
 
 # ── Per-paragraph narration (NEW — primary entry point) ───────
 
+_SILENCE_BETWEEN_PARAS = 0.22   # seconds — prevents hard cutoff between paragraphs
+
+
 def generate_narration_per_paragraph(
     paragraphs: list[str],
     voice_label: str,
     project_dir: str,
     progress_cb=None,
     voice_rate: str = "+0%",
+    voice_rates: list[str] | None = None,
 ) -> tuple[str, list[str], list[float], list[list[dict]]]:
     """Synthesise each paragraph separately, capture word timings, and produce a
     concatenated narration MP3.
 
+    voice_rates : optional per-paragraph rate list from content_analyzer.
+                  When provided, overrides voice_rate for each paragraph.
+
     Returns (combined_mp3_path, per_paragraph_paths, per_paragraph_durations,
              per_paragraph_word_timings) — word timings are LOCAL to each
-    paragraph (start=0 when the paragraph begins). Caller offsets them when
-    building the global subtitle track.
+             paragraph (start=0 when the paragraph begins).
     """
     voice_id = VOICES.get(voice_label, "en-US-GuyNeural")
 
@@ -93,10 +107,14 @@ def generate_narration_per_paragraph(
     total = len(paragraphs)
     for i, para in enumerate(paragraphs):
         if progress_cb:
-            # Callback may raise (e.g. user cancellation) — let it bubble.
             progress_cb(i, total, f"Voicing paragraph {i + 1} of {total}...")
+
+        # Per-paragraph rate: use per-para list when available, else global rate
+        rate = (voice_rates[i] if voice_rates and i < len(voice_rates)
+                else voice_rate)
+
         out = os.path.join(project_dir, f"audio_{i:02d}.mp3")
-        word_timings = _synthesize_to_mp3(para, voice_id, out, rate=voice_rate)
+        word_timings = _synthesize_to_mp3(para, voice_id, out, rate=rate)
 
         if not os.path.exists(out) or os.path.getsize(out) < 800:
             raise RuntimeError(f"Audio synthesis failed for paragraph {i}")
@@ -110,7 +128,7 @@ def generate_narration_per_paragraph(
         durations.append(dur)
         all_word_timings.append(word_timings)
 
-    # Save raw word timings for reference / debugging
+    # Save global word timings (accounting for silence gaps between paragraphs)
     try:
         import json
         offset = 0.0
@@ -122,21 +140,36 @@ def generate_narration_per_paragraph(
                     "start": round(w["start"] + offset, 4),
                     "end":   round(w["end"]   + offset, 4),
                 })
-            offset += dur
+            offset += dur + _SILENCE_BETWEEN_PARAS
         with open(os.path.join(project_dir, "word_timings.json"), "w", encoding="utf-8") as f:
             json.dump(global_timings, f, indent=2, ensure_ascii=False)
     except Exception:
         pass
 
-    # Concatenate into a single narration MP3
+    # Concatenate with a short silence gap between each paragraph to prevent
+    # the hard audio cutoff / jarring jump between lines.
     combined = os.path.join(project_dir, "audio_narration.mp3")
     clips = [AudioFileClip(p) for p in paths]
-    merged = concatenate_audioclips(clips)
+    silence = _make_silence(_SILENCE_BETWEEN_PARAS)
+    interleaved = []
+    for idx, clip in enumerate(clips):
+        interleaved.append(clip)
+        if idx < len(clips) - 1:
+            interleaved.append(silence)
+    merged = concatenate_audioclips(interleaved)
     merged.write_audiofile(combined, verbose=False, logger=None)
     merged.close()
-    for c in clips: c.close()
+    for c in clips:
+        c.close()
 
-    return combined, paths, durations, all_word_timings
+    # Adjust durations to include the silence so image/audio sync stays correct
+    padded_durations = []
+    for i, dur in enumerate(durations):
+        padded_durations.append(
+            dur + (_SILENCE_BETWEEN_PARAS if i < len(durations) - 1 else 0.0)
+        )
+
+    return combined, paths, padded_durations, all_word_timings
 
 
 # ── Cloned voice narration (commercial-safe Chatterbox) ───────

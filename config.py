@@ -76,7 +76,7 @@ ANIMATIONS = [
 ]
 
 # ── Music moods ────────────────────────────────────────────────
-MUSIC_MOODS = ["None", "Epic/Dramatic", "Calm/Peaceful", "Dark/Suspense", "Uplifting", "Mystery"]
+MUSIC_MOODS = ["Auto (AI Picks)", "None", "Epic/Dramatic", "Calm/Peaceful", "Dark/Suspense", "Uplifting", "Mystery"]
 
 # ── Faceless YouTube niches (used by trend research) ──────────
 NICHES = [
@@ -134,6 +134,7 @@ VOICE_SPEEDS = {
 
 # ── Subtitle style presets ─────────────────────────────────────
 SUBTITLE_STYLES = [
+    "Auto (AI Picks)",  # content_analyzer selects automatically based on topic/tone
     "Clean White",      # white text, black stroke, accent on last word
     "Bold Yellow",      # TikTok-style bright yellow
     "Neon Glow",        # white text with coloured glow

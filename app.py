@@ -272,6 +272,33 @@ def run_pipeline(job_id: str, settings: dict) -> None:
             _upd(job_id, status="running",
                  step="Continuing with edited script...", progress=28)
 
+        # 2c ── Content analysis — auto-select voice pacing, subtitle style, music
+        _check_cancel(job_id)
+        _upd(job_id, step="Analysing content tone and pacing...", progress=29)
+        from modules.content_analyzer import analyze_content
+        content_analysis = analyze_content(
+            topic=topic,
+            content_type=content_type,
+            style=style,
+            paragraphs=paragraphs,
+            current_music_mood=music_mood,
+        )
+        voice_rates_per_para = content_analysis["voice_rate_per_paragraph"]
+
+        # Auto subtitle: override if user left it on "Auto (AI Picks)"
+        if subtitle_preset in ("Auto (AI Picks)", "Auto", ""):
+            subtitle_preset = content_analysis["subtitle_preset"]
+            _upd(job_id, subtitle_preset=subtitle_preset)
+
+        # Auto music: override if user left it on "None" or "Auto"
+        if music_mood in ("None", "Auto", ""):
+            music_mood = content_analysis["music_mood"]
+
+        logging.info(
+            "Content analysis — subtitle=%s, music=%s, rates=%s",
+            subtitle_preset, music_mood, voice_rates_per_para,
+        )
+
         # 3 ── Audio narration (parallel with images) — 30-45%
         # Audio runs in a background thread; images run sequentially in main thread.
         # Both finish before assembly. Cuts ~30-40% off total time on longer videos.
@@ -323,6 +350,7 @@ def run_pipeline(job_id: str, settings: dict) -> None:
                         paragraphs, voice, str(project_dir),
                         progress_cb=_audio_cb,
                         voice_rate=voice_rate,
+                        voice_rates=voice_rates_per_para,
                     )
                 _audio_result["value"] = result
             except Exception as exc:
@@ -557,6 +585,7 @@ def index():
             ("Fast (+15%)", "Fast (+15%)"),
         ],
         subtitle_preset_options=[
+            ("Auto (AI Picks)", "Auto (AI Picks) — recommended"),
             ("Clean White", "Clean White"),
             ("Bold Yellow", "Bold Yellow (TikTok Style)"),
             ("Neon Glow", "Neon Glow"),
