@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Settings — Master AI Video Maker</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <div class="logo">&#9654; Master AI Video Maker</div>
+  <nav>
+    <a href="/">&#10010; New Video</a>
+    <a href="/projects">&#128190; Projects</a>
+    <a href="/research">&#128200; Trends</a>
+  </nav>
+</header>
+<main class="container">
+  <div class="form-card">
+    <h2>&#9881; Settings &amp; API Keys</h2>
+    <p class="subtitle">API keys are saved to <code>.env</code> in the project folder. Never share this file.</p>
+
+    <div id="settings-msg" style="display:none;margin-bottom:12px;padding:10px 14px;border-radius:6px;font-size:.88rem"></div>
+
+    <form id="settings-form">
+      <div class="field">
+        <label>Gemini API Key
+          <small style="color:var(--muted)">(free at ai.google.dev — used for script writing &amp; trend research)</small>
+        </label>
+        <div style="display:flex;gap:8px">
+          <input type="password" name="GEMINI_API_KEY" id="gemini-key"
+                 placeholder="AIza..." value="{{ keys.GEMINI_API_KEY or '' }}"
+                 style="flex:1;font-family:monospace">
+          <button type="button" class="btn-secondary" onclick="testKey('gemini')"
+                  style="flex-shrink:0">Test</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Pexels API Key
+          <small style="color:var(--muted)">(free at pexels.com/api — 200 req/hour, no watermark)</small>
+        </label>
+        <div style="display:flex;gap:8px">
+          <input type="password" name="PEXELS_API_KEY" id="pexels-key"
+                 placeholder="Your Pexels key..." value="{{ keys.PEXELS_API_KEY or '' }}"
+                 style="flex:1;font-family:monospace">
+          <button type="button" class="btn-secondary" onclick="testKey('pexels')"
+                  style="flex-shrink:0">Test</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>YouTube OAuth
+          <small style="color:var(--muted)">(place <code>client_secrets.json</code> from Google Cloud Console next to app.py)</small>
+        </label>
+        <div style="padding:10px;background:var(--surface-alt,#1e1e1e);border-radius:6px;border:1px solid var(--border);font-size:.85rem">
+          {% if yt_configured %}
+            <span style="color:#22c55e">&#10003; client_secrets.json found — YouTube upload enabled</span>
+          {% else %}
+            <span style="color:var(--muted)">&#10007; client_secrets.json not found — YouTube upload disabled</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button type="submit" class="btn-primary">&#9989; Save Settings</button>
+      </div>
+    </form>
+
+    <hr style="margin:24px 0;border-color:var(--border)">
+    <h3>About</h3>
+    <ul style="color:var(--muted);font-size:.88rem;line-height:1.8;padding-left:20px">
+      <li>Script &amp; SEO: Gemini Flash (free 1M tokens/day)</li>
+      <li>Images: Pollinations AI (free, no key) or Pexels (free key needed)</li>
+      <li>Voice: Microsoft edge-tts (free, no key)</li>
+      <li>Music: generated locally via NumPy (free, offline)</li>
+      <li>Upload: YouTube Data API v3 (free quota — 10,000 units/day)</li>
+    </ul>
+  </div>
+</main>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+<script>
+document.getElementById("settings-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const data = new FormData(e.target);
+  const r = await fetch("/settings", { method: "POST", body: data });
+  const d = await r.json();
+  const msg = document.getElementById("settings-msg");
+  msg.style.display = "block";
+  if (d.ok) {
+    msg.style.background = "#14532d";
+    msg.style.color = "#86efac";
+    msg.textContent = "✓ Settings saved successfully.";
+  } else {
+    msg.style.background = "#3a1212";
+    msg.style.color = "#ff6b6b";
+    msg.textContent = "Error: " + (d.error || "Unknown");
+  }
+});
+
+async function testKey(service) {
+  const r = await fetch("/settings/test/" + service, { method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      key: document.getElementById(service + "-key")?.value || ""
+    })
+  });
+  const d = await r.json();
+  alert(d.ok ? "✓ " + service + " connection OK!" : "✗ Failed: " + (d.error || "Unknown"));
+}
+</script>
+</body>
+</html>

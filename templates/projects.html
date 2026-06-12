@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>All Projects — Master AI Video Maker</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <div class="logo">&#9654; Master AI Video Maker</div>
+  <nav>
+    <a href="/">&#10010; New Video</a>
+    <a href="/research">&#128200; Trends</a>
+    <a href="/settings">&#9881; Settings</a>
+  </nav>
+</header>
+<main class="container">
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+    <h2 style="margin:0">&#128190; All Projects <span style="font-size:.85rem;color:var(--muted)">({{ projects|length }} videos)</span></h2>
+    <input type="text" id="search-input" placeholder="&#128269; Search projects..."
+           style="flex:1;min-width:200px;max-width:340px;padding:8px 12px;
+                  background:var(--surface);border:1px solid var(--border);
+                  border-radius:6px;color:var(--text);font-size:.9rem">
+    <select id="filter-style" style="padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+      <option value="">All Styles</option>
+      {% for s in styles %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+    </select>
+    <button id="export-csv-btn" class="btn-secondary" style="font-size:.82rem;padding:7px 14px">
+      &#128196; Export CSV
+    </button>
+    <button id="bulk-delete-btn" class="btn-secondary"
+      style="font-size:.82rem;padding:7px 14px;color:#ff6b6b;border-color:#ff4444;display:none">
+      &#128465; Delete Selected
+    </button>
+  </div>
+
+  {% if not projects %}
+    <div class="card" style="text-align:center;padding:60px 20px;color:var(--muted)">
+      <div style="font-size:3rem">&#127916;</div>
+      <p>No completed videos yet. <a href="/" style="color:var(--red)">Create your first one!</a></p>
+    </div>
+  {% else %}
+    <div class="projects-grid" id="projects-grid">
+      {% for p in projects %}
+      <div class="project-card"
+           data-folder="{{ p.folder }}"
+           data-title="{{ (p.title or p.topic)|lower }}"
+           data-style="{{ p.style|lower }}"
+           data-created="{{ p.created }}">
+        <div class="project-select" onclick="event.stopPropagation()">
+          <input type="checkbox" class="proj-check" data-folder="{{ p.folder }}"
+                 style="width:16px;height:16px;cursor:pointer">
+        </div>
+        {% if p.thumb_url %}
+          <img src="{{ p.thumb_url }}" alt="thumbnail"
+               onerror="this.style.display='none'"
+               onclick="location.href='/projects/{{ p.folder }}'">
+        {% else %}
+          <div class="thumb-placeholder" onclick="location.href='/projects/{{ p.folder }}'">&#127916;</div>
+        {% endif %}
+        <div class="project-info" onclick="location.href='/projects/{{ p.folder }}'">
+          <div class="project-title">{{ p.title or p.topic }}</div>
+          <div class="project-meta">
+            {{ p.duration or '' }}
+            {% if p.style %}&bull; {{ p.style }}{% endif %}
+            {% if p.created %}&bull; {{ p.created }}{% endif %}
+          </div>
+          <div style="margin-top:6px;display:flex;gap:6px">
+            <a href="{{ p.video_url }}" download class="btn-copy" onclick="event.stopPropagation()"
+               style="font-size:.75rem;padding:4px 8px">&#11123; Download</a>
+            <button class="btn-copy" onclick="event.stopPropagation();regenVideo('{{ p.folder }}')"
+                    style="font-size:.75rem;padding:4px 8px">&#8635; Regenerate</button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</main>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+<script>
+/* ── Search + filter ── */
+const searchInput  = document.getElementById("search-input");
+const filterStyle  = document.getElementById("filter-style");
+const bulkDeleteBtn = document.getElementById("bulk-delete-btn");
+
+function filterProjects() {
+  const q  = (searchInput?.value || "").toLowerCase().trim();
+  const st = (filterStyle?.value || "").toLowerCase();
+  document.querySelectorAll(".project-card").forEach(card => {
+    const title   = (card.dataset.title || "").toLowerCase();
+    const style   = (card.dataset.style || "").toLowerCase();
+    const match   = (!q || title.includes(q)) && (!st || style === st);
+    card.style.display = match ? "" : "none";
+  });
+}
+
+searchInput?.addEventListener("input", filterProjects);
+filterStyle?.addEventListener("change", filterProjects);
+
+/* ── Bulk select ── */
+document.querySelectorAll(".proj-check").forEach(cb => {
+  cb.addEventListener("change", () => {
+    const any = [...document.querySelectorAll(".proj-check")].some(c => c.checked);
+    if (bulkDeleteBtn) bulkDeleteBtn.style.display = any ? "" : "none";
+  });
+});
+
+bulkDeleteBtn?.addEventListener("click", async () => {
+  const selected = [...document.querySelectorAll(".proj-check:checked")]
+                   .map(c => c.dataset.folder);
+  if (!selected.length) return;
+  if (!confirm(`Delete ${selected.length} project(s)? This cannot be undone.`)) return;
+
+  bulkDeleteBtn.disabled = true;
+  for (const folder of selected) {
+    try {
+      await fetch("/delete_project/" + folder, { method: "POST" });
+      document.querySelector(`.project-card[data-folder="${folder}"]`)?.remove();
+    } catch(_) {}
+  }
+  bulkDeleteBtn.disabled = false;
+  bulkDeleteBtn.style.display = "none";
+});
+
+/* ── CSV export ── */
+document.getElementById("export-csv-btn")?.addEventListener("click", () => {
+  window.location.href = "/export_csv";
+});
+
+/* ── Regenerate ── */
+function regenVideo(folder) {
+  if (!confirm("Regenerate this video with the same settings?")) return;
+  fetch("/regenerate/" + folder, { method: "POST" })
+    .then(r => r.json())
+    .then(d => {
+      if (d.job_id) {
+        window.location.href = "/?regen_job=" + d.job_id;
+      } else {
+        alert("Error: " + (d.error || "Unknown"));
+      }
+    });
+}
+</script>
+</body>
+</html>

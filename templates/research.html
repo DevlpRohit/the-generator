@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trend Explorer — Master AI Video Maker</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <div class="logo">&#9654; Master AI Video Maker</div>
+  <nav>
+    <a href="/">&#10010; New Video</a>
+    <a href="/projects">&#128190; Projects</a>
+  </nav>
+</header>
+<main class="container" style="max-width:700px">
+  <h2>&#128200; Trend Explorer</h2>
+  <p class="subtitle">Find what's trending to choose your next viral topic</p>
+
+  <div class="card">
+    <div class="field">
+      <label>Enter a keyword or niche</label>
+      <input type="text" id="kw-input" placeholder="e.g. psychology, space, finance" autocomplete="off">
+    </div>
+    <button class="btn-primary" id="fetch-btn" style="width:100%;margin-top:8px">
+      &#128200; Fetch Trends
+    </button>
+    <div id="research-error" class="error-box" style="display:none;margin-top:8px"></div>
+  </div>
+
+  <div class="card" id="results-card" style="display:none">
+    <h3>&#128200; Trending Topics</h3>
+    <ul id="topic-list" class="trend-list"></ul>
+
+    <h3 style="margin-top:20px">&#9889; Title Suggestions</h3>
+    <ul id="title-list" class="trend-list"></ul>
+
+    <div style="margin-top:16px">
+      <button class="btn-primary" id="use-topic-btn" style="width:100%">
+        Use Selected Topic &rarr; Create Video
+      </button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+let selectedTopic = "";
+
+document.getElementById("fetch-btn").addEventListener("click", async () => {
+  const kw = document.getElementById("kw-input").value.trim();
+  if (!kw) return;
+  document.getElementById("fetch-btn").textContent = "Fetching...";
+  document.getElementById("research-error").style.display = "none";
+
+  try {
+    const r = await fetch("/research/fetch", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({keyword: kw})
+    });
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+
+    const topicList = document.getElementById("topic-list");
+    topicList.innerHTML = (d.trending_topics || []).map(t =>
+      `<li class="trend-item" onclick="selectTopic(this,'${escAttr(t)}')">${escHtml(t)}</li>`
+    ).join("") || "<li style='color:var(--muted)'>No results — showing fallback topics</li>";
+
+    const titleList = document.getElementById("title-list");
+    titleList.innerHTML = (d.title_suggestions || []).map(t =>
+      `<li class="trend-item" onclick="selectTopic(this,'${escAttr(t)}')">${escHtml(t)}</li>`
+    ).join("");
+
+    document.getElementById("results-card").style.display = "block";
+  } catch(e) {
+    document.getElementById("research-error").textContent = "Error: " + e.message;
+    document.getElementById("research-error").style.display = "block";
+  } finally {
+    document.getElementById("fetch-btn").textContent = "&#128200; Fetch Trends";
+  }
+});
+
+function selectTopic(el, topic) {
+  document.querySelectorAll(".trend-item.selected").forEach(i => i.classList.remove("selected"));
+  el.classList.add("selected");
+  selectedTopic = topic;
+}
+
+document.getElementById("use-topic-btn").addEventListener("click", () => {
+  if (!selectedTopic) return alert("Select a topic first");
+  location.href = "/?topic=" + encodeURIComponent(selectedTopic);
+});
+
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function escAttr(s) {
+  return String(s).replace(/'/g,"&#39;").replace(/"/g,"&quot;");
+}
+</script>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

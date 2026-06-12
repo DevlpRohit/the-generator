@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoVideo AI — Faceless YouTube Generator</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header>
+  <span class="logo">&#9654; AutoVideo AI</span>
+  <span class="tagline">Faceless YouTube video generator &mdash; 100% free, runs locally</span>
+</header>
+
+<div class="app">
+
+  <!-- ── Sidebar / Controls ── -->
+  <aside class="sidebar">
+    <h2>Create Video</h2>
+
+    <form id="gen-form">
+
+      <div>
+        <label for="topic">Video Topic</label>
+        <input
+          type="text"
+          id="topic"
+          placeholder="e.g. 5 Mind-Blowing Facts About Black Holes"
+          autocomplete="off"
+          required
+        >
+      </div>
+
+      <div>
+        <label for="style">Visual Style</label>
+        <select id="style">
+          <option value="cinematic">Cinematic</option>
+          <option value="documentary">Documentary</option>
+          <option value="cyberpunk">Cyberpunk</option>
+          <option value="minimalist">Minimalist</option>
+          <option value="dramatic">Dramatic</option>
+          <option value="epic">Epic</option>
+          <option value="educational">Educational</option>
+          <option value="mystery">Mystery</option>
+          <option value="futuristic">Futuristic</option>
+          <option value="nature">Nature</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="voice">Narrator Voice</label>
+        <select id="voice">
+          <!-- Populated by JS from /api/voices -->
+          <option value="en-US-GuyNeural">Guy (Male, Confident)</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Target Duration</label>
+        <div class="duration-row">
+          <input type="range" id="duration" min="3" max="12" value="5" step="1">
+          <span id="duration-label">5 min</span>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-generate" id="generate-btn">
+        Generate Video
+      </button>
+
+      <div id="error-msg" class="error-msg" style="display:none"></div>
+
+    </form>
+
+    <!-- Quick niche guide -->
+    <div style="margin-top:8px">
+      <h2 style="margin-bottom:8px">High-CPM Niches</h2>
+      <div style="font-size:.78rem;color:var(--muted);line-height:1.8">
+        &#127919; Finance &amp; Investing ($18–35 CPM)<br>
+        &#129504; Psychology &amp; Mind ($12–22 CPM)<br>
+        &#128640; Space &amp; Science ($8–18 CPM)<br>
+        &#128187; Tech &amp; AI ($15–28 CPM)<br>
+        &#127758; History &amp; Mysteries ($7–14 CPM)<br>
+        &#128218; True Crime ($10–20 CPM)<br>
+        &#128170; Health &amp; Wellness ($12–24 CPM)<br>
+        &#128200; Business &amp; Hustle ($14–26 CPM)
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main Panel ── -->
+  <main class="main">
+
+    <!-- Welcome -->
+    <div id="welcome">
+      <div class="big">&#127916;</div>
+      <p>Enter a topic on the left and click <strong>Generate Video</strong> to create your first faceless YouTube video.</p>
+      <p style="font-size:.78rem;margin-top:4px">Script &bull; Voiceover &bull; AI Visuals &bull; Subtitles &bull; Thumbnail</p>
+    </div>
+
+    <!-- Progress -->
+    <div class="card" id="progress-section">
+      <h3>&#9889; Generating Your Video&hellip;</h3>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+      <div class="progress-info">
+        <span class="step-label" id="step-label">Starting&hellip;</span>
+        <span id="progress-pct">0%</span>
+      </div>
+      <div style="margin-top:12px;font-size:.78rem;color:var(--muted)">
+        Estimated time: 3–6 minutes &nbsp;|&nbsp; Script &#8594; Voice &#8594; Images &#8594; Video &#8594; Subtitles &#8594; Thumbnail
+      </div>
+    </div>
+
+    <!-- Result -->
+    <div class="card" id="result-section">
+      <h3>&#127909; Your Video is Ready</h3>
+      <div class="result-grid">
+        <div>
+          <video id="result-video" controls preload="metadata"></video>
+        </div>
+        <div class="result-meta">
+          <h2 id="result-title"></h2>
+          <div class="tags" id="result-tags"></div>
+
+          <label>YouTube Description</label>
+          <textarea id="result-desc" readonly placeholder="Description will appear here&hellip;"></textarea>
+
+          <span class="disclosure-badge" id="result-disclosure" style="display:none"></span>
+
+          <a class="btn-download" id="download-btn" href="#" download>
+            &#11123; Download MP4
+          </a>
+          <div style="margin-top:8px;font-size:.75rem;color:var(--muted)">
+            Upload to YouTube &rarr; Paste description above &rarr; Add AI disclosure label in YouTube Studio
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Projects gallery -->
+    <div class="card" id="projects-section">
+      <h3>&#128190; Recent Projects</h3>
+      <div class="grid" id="projects-grid">
+        <p style="color:var(--muted);font-size:.85rem">No completed videos yet.</p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

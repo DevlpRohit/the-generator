@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Studio — Video Maker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="app">
+
+  <!-- ── Sidebar ─────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">&#9654;</span>
+      <span class="brand-name">AI&nbsp;Studio</span>
+    </div>
+    <nav class="side-nav">
+      <a href="/" class="nav-item active"><span>&#10133;</span> Create</a>
+      <a href="/projects" class="nav-item"><span>&#128250;</span> Projects</a>
+      <a href="/research" class="nav-item"><span>&#128200;</span> Trends</a>
+      <a href="/settings" class="nav-item"><span>&#9881;</span> Settings</a>
+    </nav>
+    <div class="side-foot">
+      <div class="badge-free">100% free · local · offline</div>
+    </div>
+  </aside>
+
+  <!-- ── Main ────────────────────────────────────────────── -->
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <h1>Create a Video</h1>
+        <p class="topbar-sub">Topic &rarr; script &rarr; your voice &rarr; cinematic visuals &rarr; subtitles</p>
+      </div>
+      <a class="topbar-cta" href="/projects">&#128250; My Projects</a>
+    </header>
+
+    <div class="canvas">
+      <div class="form-card">
+        <form id="gen-form" method="POST" action="/generate" enctype="multipart/form-data">
+
+          <!-- 1 · Topic & Niche -->
+          <section class="panel">
+            <div class="panel-title"><span class="step-dot">1</span> Topic &amp; Niche</div>
+
+            <div class="field">
+              <label>Niche / Category
+                <small>(pick a niche, then search trending topics)</small>
+              </label>
+              <div class="inline-row">
+                <select name="niche" id="niche-select">
+                  <option value="">— None —</option>
+                  {% for n in niches %}<option value="{{ n }}"{% if risky_niches.get(n) %} data-risk="{{ risky_niches[n] }}"{% endif %}>{{ n }}{% if risky_niches.get(n) %} &#9888;{% endif %}</option>{% endfor %}
+                </select>
+                <button type="button" class="btn-secondary" id="niche-search-btn">&#128269; Trending</button>
+              </div>
+              <div id="niche-warning" class="niche-warning" style="display:none"></div>
+            </div>
+
+            <div class="field">
+              <label>Topic / Subject Line <span class="req">*</span>
+                <small>(specific video idea — or click a trending result)</small>
+              </label>
+              <input type="text" name="topic" id="topic-input"
+                     placeholder="e.g. The shocking science of black holes" autocomplete="off">
+            </div>
+
+            <div class="field toggle-row">
+              <label>Auto-Research Mode <small>(ON = ignore topic, auto-pick a trending one)</small></label>
+              <label class="switch"><input type="checkbox" name="auto_research" id="auto-research" value="on"><span class="slider"></span></label>
+            </div>
+          </section>
+
+          <!-- 2 · Voice & Timing -->
+          <section class="panel">
+            <div class="panel-title"><span class="step-dot">2</span> Voice &amp; Timing</div>
+            <div class="grid-2">
+              <div class="field">
+                <label>Narrator Voice</label>
+                <select name="voice">
+                  {% for v in voices %}<option value="{{ v }}">{{ v }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="field">
+                <label>Voice Speed <small>(slower = documentary feel)</small></label>
+                <select name="voice_speed">
+                  {% for spd_val, spd_label in voice_speed_options %}<option value="{{ spd_val }}"{% if spd_val == "Normal" %} selected{% endif %}>{{ spd_label }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="field">
+                <label>Video Duration</label>
+                <div class="inline-row dur-row">
+                  <input type="number" name="duration_min" id="duration-min" min="0" max="60" value="2">
+                  <span class="unit">min</span>
+                  <input type="number" name="duration_sec" id="duration-sec" min="0" max="59" value="0">
+                  <span class="unit">sec</span>
+                  <span id="dur-words" class="dur-words">&asymp; 300 words</span>
+                </div>
+              </div>
+              <div class="field">
+                <label>Video Quality</label>
+                <select name="quality">
+                  {% for q in qualities %}<option value="{{ q }}"{% if q=="720p" %} selected{% endif %}>{{ q }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="field">
+                <label>Aspect Ratio</label>
+                <select name="aspect_ratio">
+                  {% for r in aspect_ratios %}<option value="{{ r }}"{% if r=="16:9" %} selected{% endif %}>{{ r }} {% if r=="16:9" %}Landscape{% elif r=="9:16" %}Shorts{% elif r=="1:1" %}Square{% else %}Classic{% endif %}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="field">
+                <label>Content Type</label>
+                <select name="content_type">
+                  {% for ct in content_types %}<option value="{{ ct }}">{{ ct }}</option>{% endfor %}
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <!-- 3 · Look & Style -->
+          <section class="panel">
+            <div class="panel-title"><span class="step-dot">3</span> Look &amp; Style</div>
+            <div class="grid-2">
+              <div class="field">
+                <label>Video Style</label>
+                <select name="style">{% for s in styles %}<option value="{{ s }}">{{ s }}</option>{% endfor %}</select>
+              </div>
+              <div class="field">
+                <label>Animation Style</label>
+                <select name="animation">{% for a in animations %}<option value="{{ a }}"{% if a=="Auto (Varied Motion)" %} selected{% endif %}>{{ a }}</option>{% endfor %}</select>
+              </div>
+              <div class="field">
+                <label>Subtitle Style</label>
+                <select name="subtitle_preset">{% for sp_val, sp_label in subtitle_preset_options %}<option value="{{ sp_val }}"{% if sp_val == "Bold Yellow" %} selected{% endif %}>{{ sp_label }}</option>{% endfor %}</select>
+              </div>
+              <div class="field">
+                <label>Background Music</label>
+                <select name="music_mood">{% for m in music_moods %}<option value="{{ m }}">{{ m }}</option>{% endfor %}</select>
+              </div>
+              <div class="field span-2">
+                <label>Image Source <small>(visuals provider)</small></label>
+                <select name="image_provider">
+                  <option value="pexels"{% if pexels_configured %} selected{% endif %}>Pexels — real VIDEO B-roll + photos (cinematic){% if pexels_configured %} ✓{% else %} (add PEXELS_API_KEY){% endif %}</option>
+                  <option value="pollinations"{% if not pexels_configured %} selected{% endif %}>Pollinations — AI art images (free, no key)</option>
+                  <option value="gemini">Gemini Imagen — AI art{% if gemini_configured %} ✓{% else %} (add GEMINI_API_KEY){% endif %}</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <!-- 4 · Your Input & Monetization -->
+          <section class="panel panel-accent">
+            <div class="panel-title"><span class="step-dot">&#128176;</span> Your Input &amp; Monetization</div>
+
+            <div class="field toggle-row hero-toggle">
+              <label>Monetization-Safe Mode <span class="pill-rec">RECOMMENDED</span>
+                <small>(forces script review so you add your own words — keeps videos monetizable. Off = demonetization risk.)</small>
+              </label>
+              <label class="switch"><input type="checkbox" name="safe_mode" id="safe-mode" value="on" checked><span class="slider"></span></label>
+            </div>
+
+            <div class="field toggle-row">
+              <label>Pause to Review Script <small>(always on with Safe Mode)</small></label>
+              <label class="switch"><input type="checkbox" name="pause_review" id="pause-review" value="on"><span class="slider"></span></label>
+            </div>
+
+            <div class="field">
+              <label>Your Take / Commentary <small>(optional — becomes an early scene; genuine human perspective)</small></label>
+              <textarea name="commentary" id="commentary-input" rows="3"
+                        placeholder="e.g. After years of bad habits, here's what finally worked for me..."></textarea>
+            </div>
+
+            <div class="field">
+              <label>Human Voiceover <span class="pill-rec">STRONGEST</span>
+                <small>(optional — upload your own narration; mp3/wav/m4a)</small>
+              </label>
+              <input type="file" name="voiceover" id="voiceover-input" accept="audio/*">
+            </div>
+          </section>
+
+          <!-- 5 · Output -->
+          <section class="panel">
+            <div class="panel-title"><span class="step-dot">4</span> Output Options</div>
+            <div class="field toggle-row">
+              <label>Also Create YouTube Shorts (9:16) <small>(extra vertical crop)</small></label>
+              <label class="switch"><input type="checkbox" name="generate_shorts" id="generate-shorts" value="on"><span class="slider"></span></label>
+            </div>
+            <div class="field toggle-row">
+              <label>Add to Queue <small>(run after the current job)</small></label>
+              <label class="switch"><input type="checkbox" name="queue_mode" id="queue-mode" value="on"><span class="slider"></span></label>
+            </div>
+          </section>
+
+          <div class="button-row">
+            <button type="button" class="btn-secondary" id="research-btn">&#128200; Research Topics</button>
+            <button type="submit" class="btn-primary" id="generate-btn">&#9889; Generate Video</button>
+          </div>
+        </form>
+
+        <div id="trends-panel" style="display:none">
+          <h3>&#128200; Trending Suggestions</h3>
+          <ul id="trends-list"></ul>
+        </div>
+        <div id="error-msg" class="error-box" style="display:none"></div>
+      </div><!-- /form-card -->
+
+      <!-- Progress card -->
+      <div class="card" id="progress-card" style="display:none">
+        <h3>&#9889; Generating your video&hellip;</h3>
+        <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+        <div class="progress-meta"><span id="step-label">Starting&hellip;</span><span id="pct-label">0%</span></div>
+        <p class="hint">Script &rarr; Voice &rarr; Visuals &rarr; Music &rarr; Encode &rarr; Compliance</p>
+        <div style="margin-top:14px;text-align:right">
+          <button type="button" id="stop-btn" class="btn-danger">&#9632; Stop Generation</button>
+        </div>
+      </div>
+
+      <!-- Script-edit panel -->
+      <div class="card" id="edit-card" style="display:none">
+        <h3>&#9999;&#65039; Review &amp; Edit Your Script</h3>
+        <p class="subtitle">Paused. Edit any paragraph in your own words, then Continue. Each paragraph becomes one scene.</p>
+        <div id="edit-paragraphs"></div>
+        <div class="inline-row" style="margin-top:14px">
+          <button type="button" id="continue-btn" class="btn-primary" style="flex:1">&#9989; Continue with Edited Script</button>
+          <button type="button" id="cancel-edit-btn" class="btn-danger">&#10006; Cancel</button>
+        </div>
+      </div>
+
+      <!-- Result card -->
+      <div class="card" id="result-card" style="display:none">
+        <h3>&#127909; Your Video is Ready!</h3>
+        <div class="result-grid">
+          <div class="video-col">
+            <video id="result-video" controls preload="metadata"></video>
+          </div>
+          <div class="meta-col">
+            <div class="meta-title" id="meta-title"></div>
+            <div class="copy-row">
+              <button class="btn-copy" onclick="copyField('copy-title')">Copy Title</button>
+              <button class="btn-copy" onclick="copyField('copy-tags')">Copy Tags</button>
+              <button class="btn-copy" onclick="copyField('copy-desc')">Copy Description</button>
+              <button class="btn-copy" id="open-folder-btn">&#128193; Folder</button>
+            </div>
+            <textarea id="copy-title" readonly rows="2"></textarea>
+            <textarea id="copy-tags" readonly rows="3"></textarea>
+            <textarea id="copy-desc" readonly rows="7"></textarea>
+            <a id="download-btn" class="btn-secondary" href="#" download>&#11123; Download MP4</a>
+
+            <div id="compliance-panel" class="compliance-panel" style="display:none">
+              <div class="compliance-head">
+                <span id="compliance-title">Monetization compliance</span>
+                <span id="compliance-score" class="compliance-score"></span>
+              </div>
+              <ul id="compliance-list" class="compliance-list"></ul>
+            </div>
+
+            <button type="button" id="yt-upload-btn" class="btn-youtube">&#9654; Upload to YouTube (Private Draft)</button>
+            <div class="disclosure-note" id="disclosure-note">Add AI disclosure label in YouTube Studio before publishing</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /canvas -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
