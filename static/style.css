@@ -46,11 +46,19 @@ h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.01em}
 .nav-item span{font-size:1rem;width:18px;text-align:center}
 .nav-item:hover{background:#171d29;color:var(--text)}
 .nav-item.active{background:var(--grad-soft);color:#fff;border:1px solid var(--border-2)}
-.side-foot{margin-top:auto;padding:8px}
+.side-foot{margin-top:auto;padding:8px;display:flex;flex-direction:column;gap:8px}
 .badge-free{
   font-size:.72rem;color:var(--muted);text-align:center;padding:8px;
   border:1px dashed var(--border-2);border-radius:9px;
 }
+.restart-btn{
+  width:100%;padding:9px 12px;border-radius:9px;border:1px solid var(--border-2);
+  background:transparent;color:var(--muted);font-size:.78rem;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.restart-btn:hover{background:#1e2840;color:var(--text);border-color:var(--accent)}
+.restart-btn.loading{opacity:.6;cursor:not-allowed;color:var(--accent)}
 
 /* ── Main / topbar ───────────────────────────────────────────── */
 .main{flex:1;min-width:0}

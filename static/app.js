@@ -141,6 +141,30 @@ function pickTrend(topic) {
   update();
 })();
 
+/* ── Restart & Update button ─────────────────────── */
+(function () {
+  const btn = document.getElementById("restart-btn");
+  if (!btn) return;
+  btn.addEventListener("click", async () => {
+    if (!confirm("Pull latest code from GitHub and restart the server?\n\nThe page will reload automatically after ~4 seconds.")) return;
+    btn.classList.add("loading");
+    btn.textContent = "⏳ Updating…";
+    try {
+      await fetch("/admin/restart", { method: "POST" });
+    } catch (_) {}
+    // Server is restarting — wait then reload
+    let secs = 4;
+    const iv = setInterval(() => {
+      btn.textContent = `⏳ Restarting in ${secs}s…`;
+      secs--;
+      if (secs < 0) {
+        clearInterval(iv);
+        location.reload();
+      }
+    }, 1000);
+  });
+})();
+
 /* ── Job persistence across page navigations ─────── */
 const JOB_KEY = "mvm_active_job";
 

@@ -24,6 +24,9 @@
       <a href="/settings" class="nav-item"><span>&#9881;</span> Settings</a>
     </nav>
     <div class="side-foot">
+      <button id="restart-btn" class="restart-btn" title="Pull latest from GitHub and restart server">
+        &#8635; Restart &amp; Update
+      </button>
       <div class="badge-free">100% free · local · offline</div>
     </div>
   </aside>
@@ -279,6 +282,6 @@
 /* Sub-niche data injected from server */
 const SUB_NICHES = {{ sub_niches | tojson }};
 </script>
-<script src="{{ url_for('static', filename='app.js') }}"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v=3"></script>
 </body>
 </html>

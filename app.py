@@ -1097,6 +1097,29 @@ def upload_youtube(folder_name: str):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/admin/restart", methods=["POST"])
+def admin_restart():
+    """Pull latest code from GitHub then restart the server process."""
+    import subprocess
+
+    def _pull_and_restart():
+        time.sleep(0.6)   # let the HTTP response reach the browser first
+        try:
+            result = subprocess.run(
+                ["git", "pull", "github", "main"],
+                cwd=str(BASE_DIR),
+                capture_output=True, text=True, timeout=30,
+            )
+            logging.info("git pull: %s %s", result.stdout.strip(), result.stderr.strip())
+        except Exception as e:
+            logging.warning("git pull failed: %s", e)
+        # Replace current process with a fresh one — same args, fresh modules
+        os.execv(sys.executable, [sys.executable] + sys.argv)
+
+    threading.Thread(target=_pull_and_restart, daemon=False).start()
+    return jsonify({"ok": True, "message": "Pulling latest code and restarting…"})
+
+
 if __name__ == "__main__":
     print("\n  The Generator — Local Video Maker")
     print("  Open: http://127.0.0.1:5000\n")
